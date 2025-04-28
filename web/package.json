@@ -3,11 +3,11 @@
   "version": "1.2.0",
   "private": true,
   "engines": {
-    "node": ">=v22.11.0"
+    "node": ">=v20.0.0"
   },
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--inspect' next dev",
-    "build": "next build",
+    "dev": "next dev",
+    "build": "NODE_OPTIONS='--max-old-space-size=12288' next build",
     "start": "cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && cross-env PORT=$npm_config_port HOSTNAME=$npm_config_host node .next/standalone/server.js",
     "lint": "pnpm eslint --cache --cache-location node_modules/.cache/eslint/.eslint-cache",
     "lint-only-show-error": "pnpm eslint --cache --cache-location node_modules/.cache/eslint/.eslint-cache --quiet",

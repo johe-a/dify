@@ -83,6 +83,8 @@ dependencies = [
     "unstructured[docx,epub,md,ppt,pptx]~=0.16.1",
     "validators==0.21.0",
     "yarl~=1.18.3",
+    "cloudscraper (>=1.2.71,<2.0.0)",
+    "opendal (>=0.45.18,<0.46.0)",
 ]
 # Before adding new dependency, consider place it in
 # alphabet order (a-z) and suitable group.
@@ -193,3 +195,6 @@ vdb = [
     "weaviate-client~=3.21.0",
     "xinference-client~=1.2.2",
 ]
+
+[tool.poetry]
+package-mode = false

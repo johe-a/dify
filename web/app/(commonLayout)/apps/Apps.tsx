@@ -28,7 +28,7 @@ import Input from '@/app/components/base/input'
 import { useStore as useTagStore } from '@/app/components/base/tag-management/store'
 import TagManagementModal from '@/app/components/base/tag-management'
 import TagFilter from '@/app/components/base/tag-management/filter'
-import CheckboxWithLabel from '@/app/components/datasets/create/website/base/checkbox-with-label'
+import { App } from '@/types/app'
 
 const getKey = (
   pageIndex: number,
@@ -66,6 +66,8 @@ const Apps = () => {
   const [isCreatedByMe, setIsCreatedByMe] = useState(queryIsCreatedByMe)
   const [tagFilterValue, setTagFilterValue] = useState<string[]>(tagIDs)
   const [searchKeywords, setSearchKeywords] = useState(keywords)
+  const [filterTagsApps, setFilterTagsApps] = useState<AppListResponse[]>([])
+  const [filterTagName, setFilterTagName] = useState<string>('')
   const newAppCardRef = useRef<HTMLDivElement>(null)
   const setKeywords = useCallback((keywords: string) => {
     setQuery(prev => ({ ...prev, keywords }))
@@ -84,6 +86,41 @@ const Apps = () => {
       errorRetryCount: 3,
     },
   )
+
+  const filterAppsByTag = (data: AppListResponse[], tagName: string) => {
+    if (!data || !tagName)
+      return []
+    return data.map(pageData => ({
+      ...pageData,
+      data: pageData.data.filter(app => app.tags?.some(tag => tag.name === tagName))
+    }))
+  }
+
+  useEffect(() => {
+    const handleMessage = (event: any) => {
+      // 安全校验：验证来源域名（本地5173端口）
+      if (event.origin !== 'http://localhost:5173') return;
+      
+      // 处理消息类型
+      if (event.data.type === 'ORGANIZATION_CHANGE') {
+        const { orgId } = event.data.payload;
+        setFilterTagName(orgId)
+      }
+    };
+  
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  useEffect(() => {
+    if (filterTagName && data) {
+      console.log(data)
+      console.log(filterAppsByTag(data, filterTagName))
+      setFilterTagsApps(filterAppsByTag(data, filterTagName))
+    } else {
+      setFilterTagsApps(data || [])
+    }
+  }, [data, filterTagName])
 
   const anchorRef = useRef<HTMLDivElement>(null)
   const options = [
@@ -159,12 +196,6 @@ const Apps = () => {
           options={options}
         />
         <div className='flex items-center gap-2'>
-          <CheckboxWithLabel
-            className='mr-2'
-            label={t('app.showMyCreatedAppsOnly')}
-            isChecked={isCreatedByMe}
-            onChange={handleCreatedByMeChange}
-          />
           <TagFilter type='app' value={tagFilterValue} onChange={handleTagsChange} />
           <Input
             showLeftIcon
@@ -176,11 +207,11 @@ const Apps = () => {
           />
         </div>
       </div>
-      {(data && data[0].total > 0)
+      {(filterTagsApps && filterTagsApps.length && filterTagsApps[0].data.length > 0)
         ? <div className='relative grid grow grid-cols-1 content-start gap-4 px-12 pt-2 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 2k:grid-cols-6'>
           {isCurrentWorkspaceEditor
             && <NewAppCard ref={newAppCardRef} onSuccess={mutate} />}
-          {data.map(({ data: apps }) => apps.map(app => (
+          {filterTagsApps.map(({ data: apps }) => apps.map(app => (
             <AppCard key={app.id} app={app} onRefresh={mutate} />
           )))}
         </div>

@@ -10,33 +10,27 @@ RUN npm install -g pnpm@10.8.0
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
-
 # install packages
 FROM base AS packages
-
 WORKDIR /app/web
-
 COPY package.json .
 COPY pnpm-lock.yaml .
 
 # if you located in China, you can use taobao registry to speed up
-# RUN pnpm install --frozen-lockfile --registry https://registry.npmmirror.com/
+RUN pnpm install --frozen-lockfile --registry https://registry.npmmirror.com/
 
-RUN pnpm install --frozen-lockfile
+# RUN pnpm install --frozen-lockfile
 
 # build resources
 FROM base AS builder
 WORKDIR /app/web
 COPY --from=packages /app/web/ .
 COPY . .
-
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN pnpm build
-
 
 # production stage
 FROM base AS production
-
 ENV NODE_ENV=production
 ENV EDITION=SELF_HOSTED
 ENV DEPLOY_ENV=PRODUCTION
@@ -53,14 +47,11 @@ ENV TZ=UTC
 RUN ln -s /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone
 
-
 WORKDIR /app/web
 COPY --from=builder /app/web/public ./public
 COPY --from=builder /app/web/.next/standalone ./
 COPY --from=builder /app/web/.next/static ./.next/static
-
 COPY docker/entrypoint.sh ./entrypoint.sh
-
 
 # global runtime packages
 RUN pnpm add -g pm2 \

@@ -57,6 +57,7 @@ const SideBar: FC<IExploreSideBarProps> = ({
 
   const fetchInstalledAppList = async () => {
     const { installed_apps }: any = await doFetchInstalledAppList()
+    console.log('installed_apps', installed_apps)
     setInstalledApps(installed_apps)
   }
 
